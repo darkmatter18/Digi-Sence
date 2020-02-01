@@ -1,5 +1,5 @@
 language: android
-dist: trusty
+os: windows
 android:
   components:
     - android-29
