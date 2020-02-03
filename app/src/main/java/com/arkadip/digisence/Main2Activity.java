@@ -5,10 +5,13 @@ import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Size;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
+import androidx.camera.core.ImageAnalysis;
+import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -53,6 +56,14 @@ public class Main2Activity extends AppCompatActivity {
                 }
             }
         }, ContextCompat.getMainExecutor(this));
+
+        ImageAnalysis imageAnalysis = new ImageAnalysis.Builder()
+                .setTargetResolution(new Size(28, 28))
+                .build();
+        imageAnalysis.setAnalyzer(ContextCompat.getMainExecutor(this),
+                image -> {
+                    //Model analysis goes here
+                });
     }
 
     private void bindPreview(@NonNull ProcessCameraProvider cameraProvider) {
