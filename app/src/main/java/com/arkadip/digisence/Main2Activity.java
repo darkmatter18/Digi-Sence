@@ -1,9 +1,6 @@
 package com.arkadip.digisence;
 
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -19,7 +16,6 @@ import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
@@ -30,25 +26,11 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 public class Main2Activity extends AppCompatActivity {
-    private static String[] PERMISSIONS = {
-            Manifest.permission.CAMERA,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE
-    };
+
     Executor executor;
     PreviewView previewView;
     Classifier classifier;
     private ListenableFuture<ProcessCameraProvider> cameraProviderListenableFuture;
-
-    private static boolean hasPermissions(Context context, String... permissions) {
-        if (context != null && permissions != null) {
-            for (String permission : permissions) {
-                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,12 +42,7 @@ public class Main2Activity extends AppCompatActivity {
 
         previewView = findViewById(R.id.preview_view);
 
-        if (!hasPermissions(this, PERMISSIONS)) {
-            int PERMISSION_ALL = 1;
-            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
-        } else {
-            startCamera();
-        }
+        startCamera();
     }
 
     private void startCamera() {
