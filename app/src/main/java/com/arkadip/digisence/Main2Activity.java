@@ -2,15 +2,11 @@ package com.arkadip.digisence;
 
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.ImageFormat;
-import android.media.Image;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.util.Size;
 
@@ -28,13 +24,7 @@ import androidx.core.content.ContextCompat;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
@@ -97,7 +87,7 @@ public class Main2Activity extends AppCompatActivity {
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private ImageCapture bindCapture(){
+    private ImageCapture bindCapture() {
         ImageCapture imageCapture = new ImageCapture.Builder()
                 .setTargetResolution(new Size(28, 28))
                 .build();
@@ -114,16 +104,12 @@ public class Main2Activity extends AppCompatActivity {
                             byte[] bytes = new byte[byteBuffer.remaining()];
                             byteBuffer.get(bytes);
                             Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
-                            Bitmap bitmap1 = Bitmap.createBitmap(bitmap, bitmap.getWidth()/2-14,
-                                    bitmap.getHeight()/2-14, 28, 28);
+                            Bitmap bitmap1 = Bitmap.createBitmap(bitmap, bitmap.getWidth() / 2 - 14,
+                                    bitmap.getHeight() / 2 - 14, 28, 28);
                             Log.d("IMAGE", "BITMAP width " + bitmap1.getWidth());
                             Log.d("IMAGE", "BITMAP height " + bitmap1.getHeight());
                             int res = classifier.predict(bitmap1);
                             Log.i("CLASSIFIER", "Result " + res);
-                            //Log.d("Image", "Format"+ image.getFormat());
-                            //@SuppressLint("UnsafeExperimentalUsageError") Image image1 = image.getImage();
-                            //int res = classifier.predict(image1);
-                            //Log.d("Image", "Result = "+ res);
                             image.close();
                         }
 
