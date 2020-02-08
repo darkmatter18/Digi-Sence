@@ -3,9 +3,11 @@ package com.arkadip.digisence;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Size;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,8 +30,10 @@ import java.util.concurrent.Executors;
 public class Main2Activity extends AppCompatActivity {
 
     Executor executor;
-    PreviewView previewView;
     Classifier classifier;
+
+    PreviewView previewView;
+    TextView textView;
     private ListenableFuture<ProcessCameraProvider> cameraProviderListenableFuture;
 
     @Override
@@ -41,6 +45,7 @@ public class Main2Activity extends AppCompatActivity {
         classifier = new Classifier(Utils.assetFilePath(this, "digimodel.pt"));
 
         previewView = findViewById(R.id.preview_view);
+        textView = findViewById(R.id.textView);
 
         startCamera();
     }
@@ -55,7 +60,6 @@ public class Main2Activity extends AppCompatActivity {
                         .requireLensFacing(CameraSelector.LENS_FACING_BACK)
                         .build();
                 Preview preview = bindPreview();
-                //ImageAnalysis imageAnalysis = bindAnalysis();
                 ImageCapture imageCapture = bindCapture();
                 cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageCapture);
             } catch (ExecutionException | InterruptedException e) {
@@ -66,6 +70,7 @@ public class Main2Activity extends AppCompatActivity {
 
     private ImageCapture bindCapture() {
         ImageCapture imageCapture = new ImageCapture.Builder()
+                .setTargetRotation(getWindowManager().getDefaultDisplay().getRotation())
                 .setTargetResolution(new Size(28, 28))
                 .build();
 
@@ -80,12 +85,18 @@ public class Main2Activity extends AppCompatActivity {
                             ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
                             byte[] bytes = new byte[byteBuffer.remaining()];
                             byteBuffer.get(bytes);
-                            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length, null);
-                            Bitmap bitmap1 = Bitmap.createBitmap(bitmap, bitmap.getWidth() / 2 - 14,
-                                    bitmap.getHeight() / 2 - 14, 28, 28);
-                            Log.d("IMAGE", "BITMAP width " + bitmap1.getWidth());
-                            Log.d("IMAGE", "BITMAP height " + bitmap1.getHeight());
+                            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0,
+                                    bytes.length, null);
+
+                            Matrix matrix = new Matrix();
+                            matrix.preRotate(90.0f);
+
+                            Bitmap bitmap1 = Bitmap.createBitmap(bitmap,
+                                    bitmap.getWidth() / 2 - 14, bitmap.getHeight() / 2 - 14,
+                                    28, 28, matrix, true);
+
                             int res = classifier.predict(bitmap1);
+                            runOnUiThread(() -> textView.setText(String.valueOf(res)));
                             Log.i("CLASSIFIER", "Result " + res);
                             image.close();
                         }
