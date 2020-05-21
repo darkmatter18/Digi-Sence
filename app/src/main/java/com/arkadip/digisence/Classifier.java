@@ -35,8 +35,8 @@ class Classifier {
     }
 
     private Tensor preprocessor(Image image, int rotation) {
-        return TensorImageUtils.imageYUV420CenterCropToFloat32Tensor(image, rotation, 24,
-                24, this.mean, this.std);
+        return TensorImageUtils.imageYUV420CenterCropToFloat32Tensor(image, rotation, 28,
+                28, this.mean, this.std);
     }
 
     private int argMax(float[] inputs) {
