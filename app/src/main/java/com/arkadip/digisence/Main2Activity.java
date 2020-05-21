@@ -137,7 +137,7 @@ public class Main2Activity extends AppCompatActivity {
         cameraProvider.unbindAll();
 
         camera = cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis);
-        preview.setPreviewSurfaceProvider(previewView);
+        preview.setSurfaceProvider(previewView.createSurfaceProvider(camera.getCameraInfo()));
     }
 
     /**

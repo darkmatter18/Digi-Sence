@@ -26,6 +26,7 @@ public class DLAnalyzer implements ImageAnalysis.Analyzer {
     @Override
     public void analyze(@NonNull ImageProxy image) {
         Log.d("IMAGE", "Image got");
+        image.close();
     }
 
 }
