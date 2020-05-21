@@ -17,24 +17,18 @@
 package com.arkadip.digisence;
 
 
-import android.app.Activity;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Matrix;
+import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.Size;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.AspectRatio;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
-import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -54,10 +48,9 @@ public class Main2Activity extends AppCompatActivity {
 
     PreviewView previewView;
     TextView textView;
-
-    private ListenableFuture<ProcessCameraProvider> cameraProviderListenableFuture;
     ProcessCameraProvider cameraProvider;
     Camera camera;
+    private ListenableFuture<ProcessCameraProvider> cameraProviderListenableFuture;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +64,7 @@ public class Main2Activity extends AppCompatActivity {
         textView = findViewById(R.id.textView);
 
         // Wait for the views to be properly laid out
-        previewView.post(() -> setUpCamera());
+        previewView.post(this::setUpCamera);
     }
 
     @Override
@@ -83,7 +76,7 @@ public class Main2Activity extends AppCompatActivity {
     /**
      * Initialize CameraX, and prepare to bind the camera use cases
      */
-    private void setUpCamera(){
+    private void setUpCamera() {
         cameraProviderListenableFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderListenableFuture.addListener(() -> {
             try {
@@ -104,11 +97,11 @@ public class Main2Activity extends AppCompatActivity {
     private void bindCameraUseCases() throws ExecutionException, InterruptedException {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         previewView.getDisplay().getRealMetrics(displayMetrics);
-        Log.d("DISPLAY", "Screen metrics: "+displayMetrics.widthPixels
-                + " x "+ displayMetrics.heightPixels);
+        Log.d("DISPLAY", "Screen metrics: " + displayMetrics.widthPixels
+                + " x " + displayMetrics.heightPixels);
 
         int aspectRatio = aspectRatio(displayMetrics.widthPixels, displayMetrics.heightPixels);
-        Log.d("DISPLAY", "Preview aspect ratio: "+aspectRatio);
+        Log.d("DISPLAY", "Preview aspect ratio: " + aspectRatio);
 
         int rotation = previewView.getDisplay().getRotation();
 
@@ -131,7 +124,19 @@ public class Main2Activity extends AppCompatActivity {
                 .setTargetAspectRatio(aspectRatio)
                 .setTargetRotation(rotation)
                 .build();
-        imageAnalysis.setAnalyzer(cameraExecutor, new DLAnalyzer());
+        imageAnalysis.setAnalyzer(cameraExecutor, new ImageAnalysis.Analyzer() {
+            @SuppressLint("UnsafeExperimentalUsageError")
+            @Override
+            public void analyze(@NonNull ImageProxy image) {
+                Log.d("IMAGE", "Image got");
+                int rotation = image.getImageInfo().getRotationDegrees();
+                int res = classifier.predict(image.getImage(), rotation);
+                runOnUiThread(() -> {
+                    textView.setText(String.valueOf(res));
+                });
+                image.close();
+            }
+        });
 
         // Must unbind the use-cases before rebinding them
         cameraProvider.unbindAll();
@@ -143,64 +148,20 @@ public class Main2Activity extends AppCompatActivity {
     /**
      * Detecting the most suitable ratio for dimensions provided in @params by counting absolute
      * of preview ratio to one of the provided values.
-     * @param width - preview width
+     *
+     * @param width  - preview width
      * @param height - preview height
      * @return suitable aspect ratio
      */
-    private int aspectRatio(int width, int height){
-        double RATIO_4_3_VALUE = 4.0/3.0;
+    private int aspectRatio(int width, int height) {
+        double RATIO_4_3_VALUE = 4.0 / 3.0;
         double RATIO_16_9_VALUE = 16.0 / 9.0;
 
-        double previewRatio = (double)Math.max(width, height)/ Math.min(width, height);
-        if(Math.abs(previewRatio - RATIO_4_3_VALUE) <= Math.abs(previewRatio - RATIO_16_9_VALUE)){
+        double previewRatio = (double) Math.max(width, height) / Math.min(width, height);
+        if (Math.abs(previewRatio - RATIO_4_3_VALUE) <= Math.abs(previewRatio - RATIO_16_9_VALUE)) {
             return AspectRatio.RATIO_4_3;
-        }
-        else {
+        } else {
             return AspectRatio.RATIO_16_9;
         }
     }
-
-//    private ImageCapture bindCapture() {
-//        ImageCapture imageCapture = new ImageCapture.Builder()
-//                .setTargetRotation(getWindowManager().getDefaultDisplay().getRotation())
-//                .setTargetResolution(new Size(28, 28))
-//                .build();
-//
-//        previewView.setOnClickListener(v -> {
-//            Log.d("Image", "Clicked");
-//            imageCapture.takePicture(cameraExecutor,
-//                    new ImageCapture.OnImageCapturedCallback() {
-//                        @Override
-//                        public void onCaptureSuccess(@NonNull ImageProxy image) {
-//                            //super.onCaptureSuccess(image);
-//                            Log.d("Image", "Captured Successfully");
-//                            ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
-//                            byte[] bytes = new byte[byteBuffer.remaining()];
-//                            byteBuffer.get(bytes);
-//                            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0,
-//                                    bytes.length, null);
-//
-//                            Matrix matrix = new Matrix();
-//                            matrix.preRotate(90.0f);
-//
-//                            Bitmap bitmap1 = Bitmap.createBitmap(bitmap,
-//                                    bitmap.getWidth() / 2 - 14, bitmap.getHeight() / 2 - 14,
-//                                    28, 28, matrix, true);
-//
-//                            int res = classifier.predict(bitmap1);
-//                            runOnUiThread(() -> textView.setText(String.valueOf(res)));
-//                            Log.i("CLASSIFIER", "Result " + res);
-//                            image.close();
-//                        }
-//
-//                        @Override
-//                        public void onError(int imageCaptureError, @NonNull String message, @Nullable Throwable cause) {
-//                            super.onError(imageCaptureError, message, cause);
-//                            Log.e("Image", message);
-//                        }
-//                    });
-//        });
-//
-//        return imageCapture;
-//    }
 }

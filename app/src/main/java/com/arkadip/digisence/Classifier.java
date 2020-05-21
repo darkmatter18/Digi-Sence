@@ -17,6 +17,7 @@
 package com.arkadip.digisence;
 
 import android.graphics.Bitmap;
+import android.media.Image;
 
 import org.pytorch.IValue;
 import org.pytorch.Module;
@@ -33,8 +34,9 @@ class Classifier {
         model = Module.load(modelPath);
     }
 
-    private Tensor preprocessor(Bitmap bitmap) {
-        return TensorImageUtils.bitmapToFloat32Tensor(bitmap, this.mean, this.std);
+    private Tensor preprocessor(Image image, int rotation) {
+        return TensorImageUtils.imageYUV420CenterCropToFloat32Tensor(image, rotation, 24,
+                24, this.mean, this.std);
     }
 
     private int argMax(float[] inputs) {
@@ -49,8 +51,8 @@ class Classifier {
         return maxIndex;
     }
 
-    int predict(Bitmap bitmap) {
-        Tensor tensor = preprocessor(bitmap);
+    int predict(Image image, int rotation) {
+        Tensor tensor = preprocessor(image, rotation);
         Tensor output = model.forward(IValue.from(tensor)).toTensor();
         float[] scores = output.getDataAsFloatArray();
         return argMax(scores);
