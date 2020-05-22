@@ -23,13 +23,11 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.AspectRatio;
 import androidx.camera.core.Camera;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
-import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -85,16 +83,11 @@ public class Main2Activity extends AppCompatActivity {
                 e.printStackTrace();
             }
 
-            try {
-                bindCameraUseCases();
-            } catch (ExecutionException | InterruptedException e) {
-                e.printStackTrace();
-            }
-
+            bindCameraUseCases();
         }, ContextCompat.getMainExecutor(this));
     }
 
-    private void bindCameraUseCases() throws ExecutionException, InterruptedException {
+    private void bindCameraUseCases() {
         DisplayMetrics displayMetrics = new DisplayMetrics();
         previewView.getDisplay().getRealMetrics(displayMetrics);
         Log.d("DISPLAY", "Screen metrics: " + displayMetrics.widthPixels
@@ -104,9 +97,6 @@ public class Main2Activity extends AppCompatActivity {
         Log.d("DISPLAY", "Preview aspect ratio: " + aspectRatio);
 
         int rotation = previewView.getDisplay().getRotation();
-
-        // CameraProvider
-        cameraProvider = cameraProviderListenableFuture.get();
 
         // CameraSelector
         CameraSelector cameraSelector = new CameraSelector.Builder()
@@ -124,18 +114,12 @@ public class Main2Activity extends AppCompatActivity {
                 .setTargetAspectRatio(aspectRatio)
                 .setTargetRotation(rotation)
                 .build();
-        imageAnalysis.setAnalyzer(cameraExecutor, new ImageAnalysis.Analyzer() {
-            @SuppressLint("UnsafeExperimentalUsageError")
-            @Override
-            public void analyze(@NonNull ImageProxy image) {
-                Log.d("IMAGE", "Image got");
-                int rotation = image.getImageInfo().getRotationDegrees();
-                int res = classifier.predict(image.getImage(), rotation);
-                runOnUiThread(() -> {
-                    textView.setText(String.valueOf(res));
-                });
-                image.close();
-            }
+        imageAnalysis.setAnalyzer(cameraExecutor, image -> {
+            Log.d("IMAGE", "Image got");
+            int rotation1 = image.getImageInfo().getRotationDegrees();
+            @SuppressLint("UnsafeExperimentalUsageError") int res = classifier.predict(image.getImage(), rotation1);
+            runOnUiThread(() -> textView.setText(String.valueOf(res)));
+            image.close();
         });
 
         // Must unbind the use-cases before rebinding them
