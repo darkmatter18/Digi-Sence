@@ -18,17 +18,17 @@ package com.arkadip.digisence;
 
 import android.graphics.Bitmap;
 import android.media.Image;
+import android.util.Log;
 
 import org.pytorch.IValue;
 import org.pytorch.Module;
 import org.pytorch.Tensor;
 import org.pytorch.torchvision.TensorImageUtils;
 
+import java.util.Arrays;
+
 class Classifier {
     private Module model;
-
-    private float[] mean = {0.5f, 0.5f, 0.5f};
-    private float[] std = {0.5f, 0.5f, 0.5f};
 
     Classifier(String modelPath) {
         model = Module.load(modelPath);
@@ -36,7 +36,7 @@ class Classifier {
 
     private Tensor preprocessor(Image image, int rotation) {
         return TensorImageUtils.imageYUV420CenterCropToFloat32Tensor(image, rotation, 28,
-                28, this.mean, this.std);
+                28, TensorImageUtils.TORCHVISION_NORM_MEAN_RGB, TensorImageUtils.TORCHVISION_NORM_STD_RGB);
     }
 
     private int argMax(float[] inputs) {
@@ -55,6 +55,7 @@ class Classifier {
         Tensor tensor = preprocessor(image, rotation);
         Tensor output = model.forward(IValue.from(tensor)).toTensor();
         float[] scores = output.getDataAsFloatArray();
+        Log.d("CLASSIFIER", "Scores: "+ Arrays.toString(scores));
         return argMax(scores);
     }
 }
